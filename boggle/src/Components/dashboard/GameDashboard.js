@@ -1,4 +1,4 @@
-import {Form} from "react-bootstrap";
+import {Form, FormControl, InputGroup} from "react-bootstrap";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {useState} from "react";
 
@@ -30,7 +30,8 @@ const GameDashboard = () => {
         }
     };
 
-    const [gameType, setGameType] = useState({difficulty: 0, visibility: false, padding: 4});
+    const [gameType, setGameType] = useState({difficulty: "0", visibility: false, padding: 4});
+    const [guessWord, setGuessWord] = useState('');
 
     function handleOnChange(e) {
         console.log(e.target.value)
@@ -43,6 +44,17 @@ const GameDashboard = () => {
         else setGameType({difficulty: e.target.value, visibility: true, padding: 3})
     }
 
+
+    const handleNameSearch = (e) => {
+        console.log(e)
+        setGuessWord(e.target.value);
+    };
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            alert('Guessed word is ' + guessWord);
+            setGuessWord("");
+        }
+    };
     return (
         <div className="grid grid-cols-3 gap-4 font-mono">
             <div>User Profile Information</div>
@@ -60,7 +72,7 @@ const GameDashboard = () => {
                             <option value="5">Hard</option>
                         </Form.Select>
                     </div>
-                    <div className={`grid grid-cols-${gameType.difficulty} font-mono m-5 mt-2`}>
+                    <div className={`grid grid-cols-${gameType.difficulty} font-mono m-5 mt-2 mb-2`}>
                         {[...Array(parseInt(gameType.difficulty) * parseInt(gameType.difficulty)).fill(0)].map((_, i) => (
                             <div
                                 className={`p-${gameType.padding} border-1 text-5xl font-bold border-solid  bg-yellow-400 text-center`}>
@@ -69,6 +81,18 @@ const GameDashboard = () => {
                         ))}
 
                     </div>
+                    <div className="m-2">Timer: 8 minutes left</div>
+                    <InputGroup hidden={gameType.difficulty === "0"}>
+                        <FormControl
+                            placeholder="Guess Word"
+                            aria-label="Guess Word"
+                            aria-describedby="basic-addon2"
+                            onChange={handleNameSearch}
+                            value={guessWord}
+                            onKeyDown={handleKeyDown}
+                        />
+                    </InputGroup>
+                    <div className="m-2">Guessed Words: </div>
                 </div>
 
             </div>
