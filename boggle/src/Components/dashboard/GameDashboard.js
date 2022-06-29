@@ -2,9 +2,10 @@ import {Form, FormControl, InputGroup} from "react-bootstrap";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {useState} from "react";
 import {useTimer} from 'react-timer-hook';
+import {useLocation} from "react-router-dom";
 
 const GameDashboard = () => {
-
+    const {state} = useLocation()
     const [gameType, setGameType] = useState({difficulty: "0", padding: 4});
     const [guessWord, setGuessWord] = useState('');
     const [isGameStarted, setIsGameStarted] = useState(false)
@@ -12,6 +13,7 @@ const GameDashboard = () => {
     const [correctWordList, setCorrectWordList] = useState([]);
     const [incorrectWordList, setIncorrectWordList] = useState([]);
 
+    console.log(useLocation())
     const expiryTimestamp = new Date();
     expiryTimestamp.setSeconds(expiryTimestamp.getSeconds() + 6); // 10 minutes timer
     const {
@@ -76,13 +78,17 @@ const GameDashboard = () => {
     };
     return (
         <div className="grid grid-cols-3 gap-4 font-mono">
-            <div>User Profile Information</div>
+            <div>User Profile Information
+                <br/>
+                <label>{state.email}</label>
+            </div>
 
             {/*https://react-bootstrap.github.io/forms/select/*/}
             <div className="m-2">
 
                 <div className="flex flex-col">
                     <div>
+                        <label>Select difficulty level to start the game:</label>
                         <Form.Select value={gameType.difficulty} onChange={handleOnChange}
                                      aria-label="Default select example">
                             <option value="0">Select game Type</option>
