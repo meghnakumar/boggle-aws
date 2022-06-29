@@ -1,4 +1,4 @@
-import {Button, Form, FormControl, InputGroup} from "react-bootstrap";
+import {Form, FormControl, InputGroup} from "react-bootstrap";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {useState} from "react";
 import {useTimer} from 'react-timer-hook';
@@ -8,12 +8,12 @@ const GameDashboard = () => {
     const [gameType, setGameType] = useState({difficulty: "0", padding: 4});
     const [guessWord, setGuessWord] = useState('');
     const [isGameStarted, setIsGameStarted] = useState(false)
-
+    const [gridData, setGridData] = useState({alphabets: [], possibleWords: {}})
     const [correctWordList, setCorrectWordList] = useState([]);
     const [incorrectWordList, setIncorrectWordList] = useState([]);
 
     const expiryTimestamp = new Date();
-    expiryTimestamp.setSeconds(expiryTimestamp.getSeconds() + 600); // 10 minutes timer
+    expiryTimestamp.setSeconds(expiryTimestamp.getSeconds() + 6); // 10 minutes timer
     const {
         seconds,
         minutes,
@@ -23,9 +23,8 @@ const GameDashboard = () => {
         start,
         pause,
         resume,
-        restart,
-        autoStart
-    } = useTimer({expiryTimestamp, onExpire: () => console.warn('onExpire called'), autoStart: false});
+        restart
+    } = useTimer({expiryTimestamp, onExpire: () => handleGameFinish(), autoStart: false});
 
     function handleOnChange(e) {
         console.log(e.target.value)
@@ -36,8 +35,28 @@ const GameDashboard = () => {
         else if (e.target.value === '4')
             setGameType({difficulty: e.target.value, padding: 4})
         else setGameType({difficulty: e.target.value, padding: 3})
+        getGridData();
     }
 
+    function handleGameFinish() {
+        setIsGameStarted(false);
+        setCorrectWordList([]);
+        setIncorrectWordList([]);
+        alert("Game finished, you guessed " + correctWordList.length + " correct words!")
+    }
+
+
+    function getGridData() {
+        // TODO: get data from Lambda function
+        let words = ["word1", "word2", "word3", "word4"]
+        let chars = "A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y"
+        setGridData({alphabets: chars.split(","), possibleWords: Object.fromEntries(words.map(word => [word, false]))})
+        console.log(gridData)
+        setIsGameStarted(true)
+        const time = new Date();
+        time.setSeconds(time.getSeconds() + 60);
+        restart(time)
+    }
 
     const handleNameSearch = (e) => {
         console.log(e)
@@ -45,7 +64,13 @@ const GameDashboard = () => {
     };
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
-            alert('Guessed word is ' + guessWord);
+            if (guessWord in gridData.possibleWords) {
+                setCorrectWordList(wordList => [...wordList, guessWord]);
+                alert('Guessed word is correct ' + guessWord);
+            } else {
+                setIncorrectWordList(wordList => [...wordList, guessWord]);
+                alert('Guessed word is incorrect ' + guessWord);
+            }
             setGuessWord("");
         }
     };
@@ -70,7 +95,7 @@ const GameDashboard = () => {
                         {[...Array(parseInt(gameType.difficulty) * parseInt(gameType.difficulty)).fill(0)].map((_, i) => (
                             <div
                                 className={`p-${gameType.padding} border-1 text-5xl font-bold border-solid  bg-yellow-400 text-center`}>
-                                A
+                                {gridData.alphabets[i]}
                             </div>
                         ))}
                     </div>
@@ -78,7 +103,7 @@ const GameDashboard = () => {
                         {[...Array(parseInt(gameType.difficulty) * parseInt(gameType.difficulty)).fill(0)].map((_, i) => (
                             <div
                                 className={`p-${gameType.padding} border-1 text-5xl font-bold border-solid  bg-yellow-400 text-center`}>
-                                A
+                                {gridData.alphabets[i]}
                             </div>
                         ))}
                     </div>
@@ -86,11 +111,11 @@ const GameDashboard = () => {
                         {[...Array(parseInt(gameType.difficulty) * parseInt(gameType.difficulty)).fill(0)].map((_, i) => (
                             <div
                                 className={`p-${gameType.padding} border-1 text-5xl font-bold border-solid  bg-yellow-400 text-center`}>
-                                A
+                                {gridData.alphabets[i]}
                             </div>
                         ))}
                     </div>
-                    <InputGroup hidden={gameType.difficulty === "0"}>
+                    <InputGroup hidden={gameType.difficulty === "0" || !isGameStarted}>
                         <FormControl
                             placeholder="Guess Word"
                             aria-label="Guess Word"
@@ -106,19 +131,9 @@ const GameDashboard = () => {
 
             <div>
                 <div style={{textAlign: 'center'}} hidden={!isGameStarted}>
-                    <div style={{fontSize: '100px'}}>
+                    <div style={{fontSize: '80px'}}>
                         <span>{days}</span>:<span>{hours}</span>:<span>{minutes}</span>:<span>{seconds}</span>
                     </div>
-                    <Button onClick={start}>Start</Button>
-                    <button onClick={pause}>Pause</button>
-                    <button onClick={resume}>Resume</button>
-                    <button onClick={() => {
-                        // Restarts to 5 minutes timer
-                        const time = new Date();
-                        time.setSeconds(time.getSeconds() + 300);
-                        restart(time)
-                    }}>Restart
-                    </button>
                 </div>
                 <div className="bg-white rounded-2 p-2 m-2" hidden={!isGameStarted}>
                     <table className="table-fixed border-collapse table-fixed w-full text-sm">
@@ -130,8 +145,8 @@ const GameDashboard = () => {
                         </thead>
                         <tbody>
                         <tr>
-                            <td className="border-r">The </td>
-                            <td className="p-2">Malcolm Lockyer</td>
+                            <td className="border-r">{correctWordList.toString()}</td>
+                            <td className="p-2">{incorrectWordList.toString()}</td>
                         </tr>
                         </tbody>
                     </table>
