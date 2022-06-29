@@ -1,47 +1,41 @@
-import {Form, FormControl, InputGroup} from "react-bootstrap";
+import {Button, Form, FormControl, InputGroup} from "react-bootstrap";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {useState} from "react";
+import {useTimer} from 'react-timer-hook';
 
 const GameDashboard = () => {
-    const json = {
-        "reminder1": {
-            "name": "Electricity Bill",
-            "amount": "67.85",
-            "date": "5th June 1:30 PM",
-            "desc": "Reminder description Lorem ipsum dofdlor sit amet, consectetur adipiscing elit."
-        },
-        "reminder2": {
-            "name": "House Rent",
-            "amount": "405",
-            "date": "9th June 4:20 PM",
-            "desc": "Reminder description Lorem ipsum dofdlor sit amet, consectetur adipiscing elit."
-        },
-        "reminder3": {
-            "name": "Internet Bill",
-            "amount": "45.97",
-            "date": "12th June 9:30 AM",
-            "desc": "Reminder description Lorem ipsum dofdlor sit amet, consectetur adipiscing elit."
-        },
-        "reminder4": {
-            "name": "NSPower",
-            "amount": "120",
-            "date": "7th July 7:00 PM",
-            "desc": "Reminder description Lorem ipsum dofdlor sit amet, consectetur adipiscing elit."
-        }
-    };
 
-    const [gameType, setGameType] = useState({difficulty: "0", visibility: false, padding: 4});
+    const [gameType, setGameType] = useState({difficulty: "0", padding: 4});
     const [guessWord, setGuessWord] = useState('');
+    const [isGameStarted, setIsGameStarted] = useState(false)
+
+    const [correctWordList, setCorrectWordList] = useState([]);
+    const [incorrectWordList, setIncorrectWordList] = useState([]);
+
+    const expiryTimestamp = new Date();
+    expiryTimestamp.setSeconds(expiryTimestamp.getSeconds() + 600); // 10 minutes timer
+    const {
+        seconds,
+        minutes,
+        hours,
+        days,
+        isRunning,
+        start,
+        pause,
+        resume,
+        restart,
+        autoStart
+    } = useTimer({expiryTimestamp, onExpire: () => console.warn('onExpire called'), autoStart: false});
 
     function handleOnChange(e) {
         console.log(e.target.value)
         if (e.target.value === '')
-            setGameType({difficulty: e.target.value, visibility: false, padding: 4})
+            setGameType({difficulty: e.target.value, padding: 4})
         else if (e.target.value === '3')
-            setGameType({difficulty: e.target.value, visibility: true, padding: 5})
+            setGameType({difficulty: e.target.value, padding: 5})
         else if (e.target.value === '4')
-            setGameType({difficulty: e.target.value, visibility: true, padding: 4})
-        else setGameType({difficulty: e.target.value, visibility: true, padding: 3})
+            setGameType({difficulty: e.target.value, padding: 4})
+        else setGameType({difficulty: e.target.value, padding: 3})
     }
 
 
@@ -72,16 +66,30 @@ const GameDashboard = () => {
                             <option value="5">Hard</option>
                         </Form.Select>
                     </div>
-                    <div className={`grid grid-cols-${gameType.difficulty} font-mono m-5 mt-2 mb-2`}>
+                    <div hidden={gameType.difficulty !== '3'} className={`grid grid-cols-3 font-mono m-5 mt-2 mb-2`}>
                         {[...Array(parseInt(gameType.difficulty) * parseInt(gameType.difficulty)).fill(0)].map((_, i) => (
                             <div
                                 className={`p-${gameType.padding} border-1 text-5xl font-bold border-solid  bg-yellow-400 text-center`}>
                                 A
                             </div>
                         ))}
-
                     </div>
-                    <div className="m-2">Timer: 8 minutes left</div>
+                    <div hidden={gameType.difficulty !== '4'} className={`grid grid-cols-4 font-mono m-5 mt-2 mb-2`}>
+                        {[...Array(parseInt(gameType.difficulty) * parseInt(gameType.difficulty)).fill(0)].map((_, i) => (
+                            <div
+                                className={`p-${gameType.padding} border-1 text-5xl font-bold border-solid  bg-yellow-400 text-center`}>
+                                A
+                            </div>
+                        ))}
+                    </div>
+                    <div hidden={gameType.difficulty !== '5'} className={`grid grid-cols-5 font-mono m-5 mt-2 mb-2`}>
+                        {[...Array(parseInt(gameType.difficulty) * parseInt(gameType.difficulty)).fill(0)].map((_, i) => (
+                            <div
+                                className={`p-${gameType.padding} border-1 text-5xl font-bold border-solid  bg-yellow-400 text-center`}>
+                                A
+                            </div>
+                        ))}
+                    </div>
                     <InputGroup hidden={gameType.difficulty === "0"}>
                         <FormControl
                             placeholder="Guess Word"
@@ -92,12 +100,43 @@ const GameDashboard = () => {
                             onKeyDown={handleKeyDown}
                         />
                     </InputGroup>
-                    <div className="m-2">Guessed Words: </div>
                 </div>
 
             </div>
 
-            <div>Leadership Board</div>
+            <div>
+                <div style={{textAlign: 'center'}} hidden={!isGameStarted}>
+                    <div style={{fontSize: '100px'}}>
+                        <span>{days}</span>:<span>{hours}</span>:<span>{minutes}</span>:<span>{seconds}</span>
+                    </div>
+                    <Button onClick={start}>Start</Button>
+                    <button onClick={pause}>Pause</button>
+                    <button onClick={resume}>Resume</button>
+                    <button onClick={() => {
+                        // Restarts to 5 minutes timer
+                        const time = new Date();
+                        time.setSeconds(time.getSeconds() + 300);
+                        restart(time)
+                    }}>Restart
+                    </button>
+                </div>
+                <div className="bg-white rounded-2 p-2 m-2" hidden={!isGameStarted}>
+                    <table className="table-fixed border-collapse table-fixed w-full text-sm">
+                        <thead>
+                        <tr>
+                            <th className="border-b p-2 text-center">Correct Words</th>
+                            <th className="border-b p-2 text-center">Incorrect Words</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td className="border-r">The </td>
+                            <td className="p-2">Malcolm Lockyer</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     );
 }
