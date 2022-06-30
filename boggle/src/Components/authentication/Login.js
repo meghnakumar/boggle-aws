@@ -29,6 +29,7 @@ export default function Login() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        console.log(pageMode)
         if (pageMode === "Login") {
             const user = new CognitoUser({
                 Username: email,
@@ -51,23 +52,25 @@ export default function Login() {
                 },
 
             });
-        } else if (pageMode === "Sign up") {
+        } else if (pageMode === "Sign Up") {
+            console.log("here")
             UserPool.signUp(email, password, [], null, (err, data) => {
                 if (err) {
                     console.log(err)
                 } else {
                     console.log(data)
-                    let userData = {
-                        Username: email,
-                        Pool: UserPool
-                    };
-                    let cognitoUser = new CognitoIdentityServiceProvider.CognitoUser(userData);
-                    cognitoUser.confirmRegistration(verificationCode, true, (err, result) => {
-
-                    })
-                    cognitoUser.resendConfirmationCode((err, result) => {
-
-                    })
+                    navigation("/verify/", {state: {email: email}});
+                    // let userData = {
+                    //     Username: email,
+                    //     Pool: UserPool
+                    // };
+                    // let cognitoUser = new CognitoIdentityServiceProvider.CognitoUser(userData);
+                    // cognitoUser.confirmRegistration(verificationCode, true, (err, result) => {
+                    //
+                    // })
+                    // cognitoUser.resendConfirmationCode((err, result) => {
+                    //
+                    // })
                 }
             })
 

@@ -13,7 +13,6 @@ const GameDashboard = () => {
     const [correctWordList, setCorrectWordList] = useState([]);
     const [incorrectWordList, setIncorrectWordList] = useState([]);
 
-    console.log(useLocation())
     const expiryTimestamp = new Date();
     expiryTimestamp.setSeconds(expiryTimestamp.getSeconds() + 6); // 10 minutes timer
     const {
