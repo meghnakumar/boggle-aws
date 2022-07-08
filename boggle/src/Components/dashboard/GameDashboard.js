@@ -3,6 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import {useState} from "react";
 import {useTimer} from 'react-timer-hook';
 import {useLocation} from "react-router-dom";
+import axios from "axios";
 
 const GameDashboard = () => {
     const {state} = useLocation()
@@ -27,18 +28,6 @@ const GameDashboard = () => {
         restart
     } = useTimer({expiryTimestamp, onExpire: () => handleGameFinish(), autoStart: false});
 
-    function handleOnChange(e) {
-        console.log(e.target.value)
-        if (e.target.value === '')
-            setGameType({difficulty: e.target.value, padding: 4})
-        else if (e.target.value === '3')
-            setGameType({difficulty: e.target.value, padding: 5})
-        else if (e.target.value === '4')
-            setGameType({difficulty: e.target.value, padding: 4})
-        else setGameType({difficulty: e.target.value, padding: 3})
-        getGridData();
-    }
-
     function handleGameFinish() {
         setIsGameStarted(false);
         setCorrectWordList([]);
@@ -47,30 +36,58 @@ const GameDashboard = () => {
     }
 
 
-    function getGridData() {
-        // TODO: get data from Lambda function
-        let words = ["word1", "word2", "word3", "word4"]
-        let chars = "A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y"
-        setGridData({alphabets: chars.split(","), possibleWords: Object.fromEntries(words.map(word => [word, false]))})
-        console.log(gridData)
-        setIsGameStarted(true)
-        const time = new Date();
-        time.setSeconds(time.getSeconds() + 60);
-        restart(time)
+    function getGridData(e) {
+        if (e.target.value !== '0')
+            axios.post('https://bomhpls6df.execute-api.us-east-1.amazonaws.com/prod',
+                {
+                    gridSize: e.target.value
+                })
+                .then((response) => {
+                    console.log("Successfully fetched")
+                    console.log(response.data)
+                    let words = response.data.listOfWords
+                    let chars = response.data.grid
+                    setGridData({
+                        alphabets: chars.split(","),
+                        possibleWords: Object.fromEntries(words.map(word => [word, false]))
+                    })
+                    console.log(gridData)
+                    setIsGameStarted(true)
+                    const time = new Date();
+                    time.setSeconds(time.getSeconds() + 600);
+                    restart(time)
+                    if (response.data.gridSize === '3')
+                        setGameType({difficulty: response.data.gridSize, padding: 5})
+                    else if (response.data.gridSize === '4')
+                        setGameType({difficulty: response.data.gridSize, padding: 4})
+                    else setGameType({difficulty: response.data.gridSize, padding: 3})
+                })
+                .catch((error) => {
+                    console.log(error)
+                    console.log("Some error occurred")
+                })
+        else {
+            setGameType({difficulty: e.target.value, padding: 4})
+            setIsGameStarted(false)
+        }
+        setCorrectWordList([]);
+        setIncorrectWordList([]);
     }
 
-    const handleNameSearch = (e) => {
+    const handleGuessWord = (e) => {
         console.log(e)
         setGuessWord(e.target.value);
     };
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
-            if (guessWord in gridData.possibleWords) {
-                setCorrectWordList(wordList => [...wordList, guessWord]);
-                alert('Guessed word is correct ' + guessWord);
+            if (guessWord.toUpperCase() in correctWordList || guessWord.toUpperCase() in incorrectWordList) {
+                alert('You have already guessed this word, please try a new guess!');
+            } else if (guessWord.toUpperCase() in gridData.possibleWords) {
+                setCorrectWordList(wordList => [...wordList, guessWord.toUpperCase()]);
+                alert('You made a correct guess!');
             } else {
-                setIncorrectWordList(wordList => [...wordList, guessWord]);
-                alert('Guessed word is incorrect ' + guessWord);
+                setIncorrectWordList(wordList => [...wordList, guessWord.toUpperCase()]);
+                alert('OOPS! Your guess was wrong, try again!');
             }
             setGuessWord("");
         }
@@ -88,7 +105,7 @@ const GameDashboard = () => {
                 <div className="flex flex-col">
                     <div>
                         <label>Select difficulty level to start the game:</label>
-                        <Form.Select value={gameType.difficulty} onChange={handleOnChange}
+                        <Form.Select value={gameType.difficulty} onChange={getGridData}
                                      aria-label="Default select example">
                             <option value="0">Select game Type</option>
                             <option value="3">Easy</option>
@@ -125,7 +142,7 @@ const GameDashboard = () => {
                             placeholder="Guess Word"
                             aria-label="Guess Word"
                             aria-describedby="basic-addon2"
-                            onChange={handleNameSearch}
+                            onChange={handleGuessWord}
                             value={guessWord}
                             onKeyDown={handleKeyDown}
                         />
