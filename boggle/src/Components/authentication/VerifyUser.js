@@ -3,12 +3,8 @@ import {Button, Form} from "react-bootstrap";
 import 'bootstrap/dist/css/bootstrap.css';
 import {useLocation, useNavigate} from "react-router-dom";
 import UserPool from "../../UserPool";
-import {
-    CognitoUserPool,
-    CognitoUserAttribute,
-    CognitoUser,
-} from 'amazon-cognito-identity-js';
-import {CognitoIdentityServiceProvider} from "aws-sdk";
+import {CognitoUser} from 'amazon-cognito-identity-js';
+import axios from "axios";
 
 export default function VerifyUser() {
     const {state} = useLocation()
@@ -24,13 +20,35 @@ export default function VerifyUser() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        cognitoUser.confirmRegistration(verificationCode, true, (err, result) => {
+        cognitoUser.confirmRegistration(verificationCode, true, async (err, result) => {
             if (err) {
                 console.log(err)
                 setErrorMessage("Incorrect verification code, please regenerate verification again.")
             } else {
                 console.log(result)
-                navigation("/playgame/", {state: {email: state.email}});
+                await axios.post('https://fruphzswd4.execute-api.us-east-1.amazonaws.com/addUser',
+                    {
+                        userID: state.email})
+                    .then((response) => {
+                        console.log("User successfully added")
+                    })
+                    .catch((error) => {
+                        console.log(error)
+                        console.log("Unable to add user")
+                    })
+                await axios.post('https://6ij93fr12c.execute-api.us-east-1.amazonaws.com/subscribe',
+                    {
+                        userID: state.email
+                    })
+                    .then((response) => {
+                        console.log("User successfully subscribed")
+                    })
+                    .catch((error) => {
+                        console.log(error)
+                        console.log("Unable to subscribe to mails")
+                    })
+
+                navigation("/playgame/", {state: {username: state.username, email: state.email}});
             }
         })
 
@@ -57,7 +75,8 @@ export default function VerifyUser() {
                 <Form noValidate onSubmit={handleSubmit}>
                     <Form.Group>
                         <Form.Label className="mt-2">Verification Code</Form.Label>
-                        <Form.Control disabled={errorMessage.length !== 0} onChange={handleVerificationCode} value={verificationCode} type="number"
+                        <Form.Control disabled={errorMessage.length !== 0} onChange={handleVerificationCode}
+                                      value={verificationCode} type="number"
                                       placeholder="Verification Code"/>
                     </Form.Group>
                     <Form.Group>

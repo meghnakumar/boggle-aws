@@ -4,13 +4,13 @@ import 'bootstrap/dist/css/bootstrap.css';
 import {useNavigate} from "react-router-dom";
 import UserPool from "../../UserPool";
 import {CognitoUser, AuthenticationDetails} from "amazon-cognito-identity-js";
-import {CognitoIdentityServiceProvider} from "aws-sdk";
+import {CognitoUserAttribute} from "amazon-cognito-identity-js";
 
 export default function Login() {
 
     const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [verificationCode, setVerificationCode] = useState('');
     const [errorMessage, setErrorMessage] = useState('')
     const [pageMode, setPageMode] = useState("Login")
 
@@ -26,6 +26,10 @@ export default function Login() {
         setErrorMessage('');
     };
 
+    const handleUsername = (e) => {
+        setUsername(e.target.value);
+        setErrorMessage('');
+    }
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -42,7 +46,7 @@ export default function Login() {
 
             user.authenticateUser(authDetails, {
                 onSuccess: (data) => {
-                    navigation("/playgame/", {state: {email: email}});
+                    navigation("/playgame/", {state: {username: data.getIdToken().payload['custom:Nickname'], email:email}});
                 },
                 onFailure: (data) => {
                     setErrorMessage("Incorrect email or password");
@@ -54,23 +58,21 @@ export default function Login() {
             });
         } else if (pageMode === "Sign Up") {
             console.log("here")
-            UserPool.signUp(email, password, [], null, (err, data) => {
+            const attributeList = [];
+
+            const attributeUsername = new CognitoUserAttribute({
+                Name: 'custom:Nickname',
+                Value: username
+            });
+
+            attributeList.push(attributeUsername);
+            UserPool.signUp(email, password, attributeList, null, (err, data) => {
                 if (err) {
                     console.log(err)
+                    setErrorMessage(err.message)
                 } else {
                     console.log(data)
-                    navigation("/verify/", {state: {email: email}});
-                    // let userData = {
-                    //     Username: email,
-                    //     Pool: UserPool
-                    // };
-                    // let cognitoUser = new CognitoIdentityServiceProvider.CognitoUser(userData);
-                    // cognitoUser.confirmRegistration(verificationCode, true, (err, result) => {
-                    //
-                    // })
-                    // cognitoUser.resendConfirmationCode((err, result) => {
-                    //
-                    // })
+                    navigation("/verify/", {state: {username: username, email:email}});
                 }
             })
 
@@ -91,6 +93,10 @@ export default function Login() {
 
             <div className="container-fluid col-md-6 bg-blue-100 p-2 mt-4 rounded-2">
                 <Form noValidate onSubmit={handleSubmit}>
+                    <Form.Group hidden={pageMode === "Login"}>
+                        <Form.Label className="mt-2">Name</Form.Label>
+                        <Form.Control onChange={handleUsername} value={username} placeholder="Name"/>
+                    </Form.Group>
                     <Form.Group controlId="validationCustom03">
                         <Form.Label className="mt-2">Email</Form.Label>
                         <Form.Control onChange={handleEmail} value={email} placeholder="Email"/>
