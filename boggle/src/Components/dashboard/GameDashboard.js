@@ -1,9 +1,18 @@
 import {Form, FormControl, InputGroup} from "react-bootstrap";
 import 'bootstrap/dist/css/bootstrap.min.css';
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {useTimer} from 'react-timer-hook';
 import {useLocation} from "react-router-dom";
 import axios from "axios";
+
+// Scoring:
+// 1 correct guess is 1 point
+// For 3*3 grid:
+//     If total time is 8 minutes and 10 extra points on all successful guesses
+// For 4*4 grid:
+//     If total time is 6 minutes and 10 extra points on all successful guesses
+// For 5*5 grid:
+//     If total time is 4 minutes and 10 extra points on all successful guesses
 
 const GameDashboard = () => {
     const {state} = useLocation()
@@ -13,6 +22,14 @@ const GameDashboard = () => {
     const [gridData, setGridData] = useState({alphabets: [], possibleWords: {}})
     const [correctWordList, setCorrectWordList] = useState([]);
     const [incorrectWordList, setIncorrectWordList] = useState([]);
+    const [leadershipBoard, setLeadershipBoard] = useState([]);
+    const [userDetails, setUserDetails] = useState({});
+    const [points, setPoints] = useState(0);
+
+    useEffect(() => {
+        fetchLeadershipBoard()
+        fetchUserDetails()
+    }, [])
 
     const expiryTimestamp = new Date();
     expiryTimestamp.setSeconds(expiryTimestamp.getSeconds() + 6); // 10 minutes timer
@@ -35,6 +52,28 @@ const GameDashboard = () => {
         alert("Game finished, you guessed " + correctWordList.length + " correct words!")
     }
 
+    const fetchLeadershipBoard = () => {
+        axios.get('https://wo64e7nzsi.execute-api.us-east-1.amazonaws.com/getLeadership')
+            .then((response) => {
+                console.log(response)
+                setLeadershipBoard(JSON.parse(response.data.body));
+            })
+            .catch((error) => {
+                console.log(error)
+                console.log("Unable to fetch leadership board")
+            })
+    }
+    const fetchUserDetails = () => {
+        axios.get('https://wo64e7nzsi.execute-api.us-east-1.amazonaws.com/getLeadership')
+            .then((response) => {
+                console.log(response)
+                setUserDetails(JSON.parse(response.data.body));
+            })
+            .catch((error) => {
+                console.log(error)
+                console.log("Unable to fetch user details")
+            })
+    }
 
     function getGridData(e) {
         if (e.target.value !== '0')
@@ -54,13 +93,17 @@ const GameDashboard = () => {
                     console.log(gridData)
                     setIsGameStarted(true)
                     const time = new Date();
-                    time.setSeconds(time.getSeconds() + 600);
-                    restart(time)
-                    if (response.data.gridSize === '3')
+                    if (response.data.gridSize === '3') {
                         setGameType({difficulty: response.data.gridSize, padding: 5})
-                    else if (response.data.gridSize === '4')
+                        time.setSeconds(time.getSeconds() + 480);
+                    } else if (response.data.gridSize === '4') {
                         setGameType({difficulty: response.data.gridSize, padding: 4})
-                    else setGameType({difficulty: response.data.gridSize, padding: 3})
+                        time.setSeconds(time.getSeconds() + 360);
+                    } else {
+                        setGameType({difficulty: response.data.gridSize, padding: 3})
+                        time.setSeconds(time.getSeconds() + 240);
+                    }
+                    restart(time)
                 })
                 .catch((error) => {
                     console.log(error)
@@ -83,6 +126,7 @@ const GameDashboard = () => {
             if (guessWord.toUpperCase() in correctWordList || guessWord.toUpperCase() in incorrectWordList) {
                 alert('You have already guessed this word, please try a new guess!');
             } else if (guessWord.toUpperCase() in gridData.possibleWords) {
+                setPoints(points + 1);
                 setCorrectWordList(wordList => [...wordList, guessWord.toUpperCase()]);
                 alert('You made a correct guess!');
             } else {
@@ -94,9 +138,64 @@ const GameDashboard = () => {
     };
     return (
         <div className="grid grid-cols-3 gap-4 font-mono">
-            <div>User Profile Information
+            <div>
+                <label className="text-lg p-3 font-bold">Hey {state.username}!</label>
                 <br/>
-                <label>{state.email}</label>
+                <label className="text-lg font-bold p-3">Leadership Board:</label>
+                <div className="bg-white rounded-2 p-1 mt-0 m-2" hidden={leadershipBoard.length === 0}>
+                    <table className="table-fixed border-collapse table-fixed w-full text-sm">
+                        <thead>
+                        <tr>
+                            <th className="border-b p-2 text-center">Rank</th>
+                            <th className="border-b p-2 text-center">Username</th>
+                            <th className="border-b p-2 text-center">Score</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {leadershipBoard.map((user, index) => <tr>
+                            <td className="border-r text-center">{index + 1}</td>
+                            <td className="p-2 text-center">{user.userID}</td>
+                            <td className="p-2 text-center">{user.score}</td>
+                        </tr>)}
+
+                        </tbody>
+                    </table>
+                </div>
+                <label className="text-lg font-bold p-3">Scoreboard:</label>
+                <div className="bg-white rounded-2 p-1 mt-0 m-2" hidden={leadershipBoard.length === 0}>
+                    <table className="table-fixed border-collapse table-fixed w-full text-sm">
+                        <thead>
+                        <tr>
+                            <th className="border-b p-2 text-center"></th>
+                            <th className="border-b p-2 text-center">Easy</th>
+                            <th className="border-b p-2 text-center">Medium</th>
+                            <th className="border-b p-2 text-center">Hard</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td className="border-r text-center">Games Played</td>
+                            <td className="p-2 text-center">8</td>
+                            <td className="p-2 text-center">6</td>
+                            <td className="p-2 text-center">4</td>
+                        </tr>
+                        <tr>
+                            <td className="border-r text-center">Score</td>
+                            <td className="p-2 text-center">50</td>
+                            <td className="p-2 text-center">60</td>
+                            <td className="p-2 text-center">95</td>
+                        </tr>
+                        <tr>
+                            <td className="border-r text-center">Best Score</td>
+                            <td className="p-2 text-center">5</td>
+                            <td className="p-2 text-center">7</td>
+                            <td className="p-2 text-center">32</td>
+                        </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+                <br/>
             </div>
 
             {/*https://react-bootstrap.github.io/forms/select/*/}
