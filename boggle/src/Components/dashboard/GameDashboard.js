@@ -209,7 +209,7 @@ const GameDashboard = () => {
                 <label className="text-lg p-3 font-bold">Hey {state.username}!</label>
                 <br/>
                 <label className="text-lg font-bold p-3">Leadership Board:</label>
-                <div className="bg-white rounded-2 p-1 mt-0 m-2" hidden={leadershipBoard.length === 0}>
+                <div className="bg-body border-dark rounded-2 p-1 mt-0 m-2" hidden={leadershipBoard.length === 0}>
                     <table className="table-fixed border-collapse table-fixed w-full text-sm">
                         <thead>
                         <tr>
@@ -221,7 +221,7 @@ const GameDashboard = () => {
                         <tbody>
                         {leadershipBoard.map((user, index) => <tr>
                             <td className="border-r text-center">{index + 1}</td>
-                            <td className="p-2 text-center">{user.userName}</td>
+                            <td className="border-r p-2 text-center">{user.userName}</td>
                             <td className="p-2 text-center">{user.score}</td>
                         </tr>)}
 
@@ -229,7 +229,7 @@ const GameDashboard = () => {
                     </table>
                 </div>
                 <label className="text-lg font-bold p-3">Scoreboard:</label>
-                <div className="bg-white rounded-2 p-1 mt-0 m-2" hidden={leadershipBoard.length === 0}>
+                <div className="bg-white border-dark rounded-2 p-1 mt-0 m-2" hidden={leadershipBoard.length === 0}>
                     <table className="table-fixed border-collapse table-fixed w-full text-sm">
                         <thead>
                         <tr>
@@ -270,7 +270,7 @@ const GameDashboard = () => {
 
                 <div className="flex flex-col">
                     <div>
-                        <label>Select difficulty level to start the game:</label>
+                        <label>Select Difficulty Level to Start the Game:</label>
                         <Form.Select value={gameType.difficulty} onChange={getGridData}
                                      aria-label="Default select example">
                             <option value="0">Select game Type</option>
@@ -283,7 +283,7 @@ const GameDashboard = () => {
                     <div hidden={gameType.difficulty !== '3'} className={`grid grid-cols-3 font-mono m-5 mt-2 mb-2`}>
                         {[...Array(parseInt(gameType.difficulty) * parseInt(gameType.difficulty)).fill(0)].map((_, i) => (
                             <div
-                                className={`p-5 border-1 text-5xl font-bold border-solid  bg-yellow-400 text-center`}>
+                                className={`p-5 border-2 text-5xl font-bold border-solid border-dark  bg-yellow-400 text-center`}>
                                 {gridData.alphabets[i]}
                             </div>
                         ))}
@@ -291,7 +291,7 @@ const GameDashboard = () => {
                     <div hidden={gameType.difficulty !== '4'} className={`grid grid-cols-4 font-mono m-5 mt-2 mb-2`}>
                         {[...Array(parseInt(gameType.difficulty) * parseInt(gameType.difficulty)).fill(0)].map((_, i) => (
                             <div
-                                className={`p-4 border-1 text-5xl font-bold border-solid  bg-yellow-400 text-center`}>
+                                className={`p-4 border-2 text-5xl font-bold border-solid border-dark bg-yellow-400 text-center`}>
                                 {gridData.alphabets[i]}
                             </div>
                         ))}
@@ -299,7 +299,7 @@ const GameDashboard = () => {
                     <div hidden={gameType.difficulty !== '5'} className={`grid grid-cols-5 font-mono m-5 mt-2 mb-2`}>
                         {[...Array(parseInt(gameType.difficulty) * parseInt(gameType.difficulty)).fill(0)].map((_, i) => (
                             <div
-                                className={`p-3 border-1 text-5xl font-bold border-solid  bg-yellow-400 text-center`}>
+                                className={`p-3 border-2 text-5xl font-bold border-solid border-dark bg-yellow-400 text-center`}>
                                 {gridData.alphabets[i]}
                             </div>
                         ))}
@@ -327,7 +327,7 @@ const GameDashboard = () => {
                         <span>{days}</span>:<span>{hours}</span>:<span>{minutes}</span>:<span>{seconds}</span>
                     </div>
                 </div>
-                <div className="bg-white rounded-2 p-2 m-2" hidden={!isGameStarted}>
+                <div className="bg-white border-dark rounded-2 p-2 m-2" hidden={!isGameStarted}>
                     <table className="table-fixed border-collapse table-fixed w-full text-sm">
                         <thead>
                         <tr>

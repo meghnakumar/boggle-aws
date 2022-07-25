@@ -1,10 +1,9 @@
 import {useState} from 'react';
-import {Button, Col, Container, Form} from "react-bootstrap";
+import {Button, Form} from "react-bootstrap";
 import 'bootstrap/dist/css/bootstrap.css';
 import {useNavigate} from "react-router-dom";
 import UserPool from "../../UserPool";
-import {CognitoUser, AuthenticationDetails} from "amazon-cognito-identity-js";
-import {CognitoUserAttribute} from "amazon-cognito-identity-js";
+import {AuthenticationDetails, CognitoUser, CognitoUserAttribute} from "amazon-cognito-identity-js";
 
 export default function Login() {
 
@@ -90,7 +89,7 @@ export default function Login() {
 
     return (
         <div>
-
+            <div className="text-5xl font-bold p-3 text-center">Welcome to Boggle Game!</div>
             <div className="container-fluid col-md-6 bg-blue-100 p-2 mt-4 rounded-2">
                 <Form noValidate onSubmit={handleSubmit}>
                     <Form.Group hidden={pageMode === "Login"}>
