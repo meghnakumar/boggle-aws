@@ -143,13 +143,13 @@ const GameDashboard = () => {
                     const time = new Date();
                     if (response.data.gridSize === '3') {
                         setGameType({difficulty: response.data.gridSize})
-                        time.setSeconds(time.getSeconds() + 30);
+                        time.setSeconds(time.getSeconds() + 480);
                     } else if (response.data.gridSize === '4') {
                         setGameType({difficulty: response.data.gridSize})
-                        time.setSeconds(time.getSeconds() + 30);
+                        time.setSeconds(time.getSeconds() + 360);
                     } else {
                         setGameType({difficulty: response.data.gridSize})
-                        time.setSeconds(time.getSeconds() + 20);
+                        time.setSeconds(time.getSeconds() + 240);
                     }
                     restart(time)
                 })
