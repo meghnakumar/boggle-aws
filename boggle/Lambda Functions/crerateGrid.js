@@ -33,6 +33,7 @@ function between(min, max) {
 }
 
 //Fisher Yates algorithm for random shuffle, shuffles the grid letters to increase randomness
+//Reference https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
 function fisherYates ( matrix ) {
 
     var i = matrix.length;
