@@ -1,4 +1,5 @@
 import {useState} from 'react';
+// Code Reference: https://react-bootstrap.github.io/
 import {Button, Form} from "react-bootstrap";
 import 'bootstrap/dist/css/bootstrap.css';
 import {useNavigate} from "react-router-dom";
@@ -42,7 +43,8 @@ export default function Login() {
                 Username: email,
                 Password: password
             });
-
+            // Code Reference : https://aws.amazon.com/cognito/
+            // Code Reference : https://github.com/aws-amplify/amplify-js
             user.authenticateUser(authDetails, {
                 onSuccess: (data) => {
                     navigation("/playgame/", {state: {username: data.getIdToken().payload['custom:Nickname'], email:email}});
@@ -65,6 +67,8 @@ export default function Login() {
             });
 
             attributeList.push(attributeUsername);
+            // Code Reference : https://aws.amazon.com/cognito/
+            // Code Reference : https://github.com/aws-amplify/amplify-js
             UserPool.signUp(email, password, attributeList, null, (err, data) => {
                 if (err) {
                     console.log(err)

@@ -1,5 +1,6 @@
 const aws = require('aws-sdk');
 
+//Code Reference: https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/dynamodb-example-query-scan.html
 exports.handler = async (event, context) => {
     let responseBody = "";
     let statusCode = 0;
@@ -10,6 +11,7 @@ exports.handler = async (event, context) => {
         console.log(Items)
         
         //sorting the values fetched from the table
+        // Code Reference : https://stackoverflow.com/a/5876459/12146592
         Items.sort((a,b) => b.score - a.score);
         console.log(Items)
         responseBody = JSON.stringify(Items);

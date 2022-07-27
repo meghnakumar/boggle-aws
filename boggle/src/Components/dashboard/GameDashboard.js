@@ -51,6 +51,7 @@ const GameDashboard = () => {
         fetchLeadershipBoard()
     }
 
+    // Code Reference : https://www.digitalocean.com/community/tutorials/react-axios-react
     const fetchLeadershipBoard = () => {
         axios.get('https://wo64e7nzsi.execute-api.us-east-1.amazonaws.com/getLeadership')
             .then((response) => {
@@ -172,13 +173,10 @@ const GameDashboard = () => {
         // Scoring:
         // For 3*3 grid:
         //     1 correct guess is 1 point
-        //     If total time is 8 minutes and 10 extra points on all successful guesses
         // For 4*4 grid:
         //     1 correct guess is 2 point
-        //     If total time is 6 minutes and 10 extra points on all successful guesses
         // For 5*5 grid:
         //     1 correct guess is 3 point
-        //     If total time is 4 minutes and 10 extra points on all successful guesses
 
         if (e.key === 'Enter') {
             if (correctWordList.includes(guessWord.toUpperCase()) || incorrectWordList.includes(guessWord.toUpperCase())) {
@@ -209,6 +207,7 @@ const GameDashboard = () => {
                 <label className="text-lg p-3 font-bold">Hey {state.username}!</label>
                 <br/>
                 <label className="text-lg font-bold p-3">Leadership Board:</label>
+                {/* Code Reference : https://tailwindcss.com/docs/installation */}
                 <div className="bg-body border-dark rounded-2 p-1 mt-0 m-2" hidden={leadershipBoard.length === 0}>
                     <table className="table-fixed border-collapse table-fixed w-full text-sm">
                         <thead>
@@ -254,7 +253,7 @@ const GameDashboard = () => {
                         </tr>
                         <tr>
                             <td className="border-r text-center">Best Score</td>
-                            <td className="p-2 text-center">{userDetails.EasyScore}</td>
+                            <td className="p-2 text-center">{userDetails.EasyBest}</td>
                             <td className="p-2 text-center">{userDetails.MediumBest}</td>
                             <td className="p-2 text-center">{userDetails.HardBest}</td>
                         </tr>
@@ -265,7 +264,7 @@ const GameDashboard = () => {
                 <br/>
             </div>
 
-            {/*https://react-bootstrap.github.io/forms/select/*/}
+            {/* Code Reference : https://react-bootstrap.github.io/forms/select/*/}
             <div className="m-2">
 
                 <div className="flex flex-col">

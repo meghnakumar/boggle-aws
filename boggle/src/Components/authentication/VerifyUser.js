@@ -20,9 +20,11 @@ export default function VerifyUser() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        // Code Reference : https://aws.amazon.com/cognito/
+        // Code Reference : https://github.com/aws-amplify/amplify-js
+        // Code Reference :  https://docs.amplify.aws/start/q/integration/react/
         cognitoUser.confirmRegistration(verificationCode, true, async (err, result) => {
             if (err) {
-                console.log(err)
                 setErrorMessage("Incorrect verification code, please regenerate verification again.")
             } else {
                 console.log(result)
@@ -34,7 +36,6 @@ export default function VerifyUser() {
                     })
                     .catch((error) => {
                         console.log(error)
-                        console.log("Unable to add user")
                     })
                 await axios.post('https://6ij93fr12c.execute-api.us-east-1.amazonaws.com/subscribe',
                     {
