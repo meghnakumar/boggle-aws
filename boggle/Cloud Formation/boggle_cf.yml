@@ -1,0 +1,958 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+#Code Reference 1: https://pastebin.com/z335Azdi
+#Code Reference 2: https://www.thelambdablog.com/running-a-lambda-on-a-schedule-using-eventbridge-cron-and-rate-expressions
+#Code Reference 3: https://nickolaskraus.io/articles/creating-an-amazon-api-gateway-with-a-lambda-integration-using-cloudformation/
+
+Resources:
+  dictionaryforbogglegamedevelopment:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: dictionaryforbogglegamedevelopment
+      AccessControl: Private
+      
+  UserDetailsdevelopment: 
+    Type: AWS::DynamoDB::Table 
+    Properties: 
+
+      AttributeDefinitions: 
+
+      - AttributeName: UserID 
+
+        AttributeType: S 
+
+      - AttributeName: EasyBest 
+
+        AttributeType: N
+
+      BillingMode: PROVISIONED 
+
+      KeySchema: 
+
+      - AttributeName: UserID 
+
+        KeyType: HASH 
+
+      - AttributeName: EasyBest 
+
+        KeyType: RANGE 
+
+      ProvisionedThroughput: 
+
+        ReadCapacityUnits: 5 
+
+        WriteCapacityUnits: 5 
+
+      TableName: UserDetailsdevelopment
+
+  Leadershipdevelopment: 
+
+    Type: AWS::DynamoDB::Table 
+
+    Properties: 
+
+      AttributeDefinitions: 
+
+      - AttributeName: UserID 
+
+        AttributeType: S 
+
+      - AttributeName: Score 
+
+        AttributeType: N 
+
+      BillingMode: PROVISIONED 
+
+      KeySchema: 
+
+      - AttributeName: UserID 
+
+        KeyType: HASH 
+
+      - AttributeName: Score 
+
+        KeyType: RANGE 
+
+      ProvisionedThroughput: 
+
+        ReadCapacityUnits: 5 
+
+        WriteCapacityUnits: 5 
+
+      TableName: Leadershipdevelopment
+  NotifySNSTopicdevelopment:
+    Type: AWS::SNS::Topic
+    Properties: 
+      DisplayName: NotifyLeaderBoarddevelopment
+      TopicName: NotifyLeaderBoarddevelopment
+  ApiGatewayAddUserRestApidevelopment:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      ApiKeySourceType: HEADER
+      Description: An API Gateway with a Lambda Integration
+      EndpointConfiguration:
+        Types:
+          - EDGE
+      Name: AddUserDetailsAPIdevelopment
+
+  ApiGatewayAddUserResourcedevelopment:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGatewayAddUserRestApidevelopment.RootResourceId
+      PathPart: 'lambda'
+      RestApiId: !Ref ApiGatewayAddUserRestApidevelopment
+
+  ApiGatewayAddUserMethoddevelopment:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        ConnectionType: INTERNET
+        Credentials: arn:aws:iam::958429162335:role/LabRole
+        IntegrationHttpMethod: POST
+        PassthroughBehavior: WHEN_NO_MATCH
+        TimeoutInMillis: 29000
+        Type: AWS_PROXY
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AddUserLambdaFunctiondevelopment.Arn}/invocations'
+      OperationName: 'lambda'
+      ResourceId: !Ref ApiGatewayAddUserResourcedevelopment
+      RestApiId: !Ref ApiGatewayAddUserRestApidevelopment
+
+  ApiGatewayAddUserModeldevelopment:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      ContentType: 'application/json'
+      RestApiId: !Ref ApiGatewayAddUserRestApidevelopment
+      Schema: {}
+
+  ApiGatewayAddUserStagedevelopment:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref ApiGatewayAddUserDeploymentdevelopment
+      Description: Lambda API Stage v0
+      RestApiId: !Ref ApiGatewayAddUserRestApidevelopment
+      StageName: 'addUserdevelopment'
+
+  ApiGatewayAddUserDeploymentdevelopment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: ApiGatewayAddUserMethoddevelopment
+    Properties:
+      Description: Add User Lambda API Deployment
+      RestApiId: !Ref ApiGatewayAddUserRestApidevelopment
+
+  AddUserLambdaFunctiondevelopment:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+          const aws = require('aws-sdk');
+            exports.handler = async (event, context) => {
+            let responseBody = "";
+                let statusCode = 0;
+            
+            try{
+                const docClient = new aws.DynamoDB.DocumentClient();
+                // let body = JSON.parse(event.body)
+                /*const userID = event['userID']*/
+                // const userID = body.userID
+                const userID = event.userID
+                const EasyGames = 0
+                const MediumGames = 0
+                const HardGames = 0
+                const EasyScore = 0
+                const MediumScore = 0
+                const HardScore = 0
+                const EasyBest = 0
+                const MediumBest = 0
+                const HardBest = 0
+            
+                const params = {
+                TableName: "UserDetailsdevelopment",
+                Item: {
+                    userID: userID,
+                    EasyGames: EasyGames,
+                    MediumGames: MediumGames,
+                    HardGames: HardGames,
+                    EasyScore: EasyScore,
+                    MediumScore:MediumScore,
+                    HardScore:HardScore,
+                    EasyBest:EasyBest,
+                    MediumBest:MediumBest,
+                    HardBest:HardBest
+                    
+                    
+                    
+                },
+            };
+                const data = await docClient.put(params).promise();
+                console.log(data)
+                responseBody = JSON.stringify(data);
+                statusCode = 201;
+                
+            }catch (err) {
+                console.log(err);
+                const message = `Error`;
+                console.log(message);
+                throw new Error(message);
+            }
+            const response = {
+                statusCode: statusCode,
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: "User added"
+            };
+            return response;
+            };       
+      Description: AWS Lambda function to add a user
+      FunctionName: 'addUserDetailsdevelopment'
+      Handler: index.handler
+      MemorySize: 256
+      Role: arn:aws:iam::958429162335:role/LabRole
+      Runtime: nodejs12.x
+      Timeout: 60
+  ApiGatewaySetUserRestApidevelopment:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      ApiKeySourceType: HEADER
+      Description: An API Gateway with a Lambda Integration
+      EndpointConfiguration:
+        Types:
+          - EDGE
+      Name: UpdateUserDetailsAPIdevelopment
+
+  ApiGatewaySetUserResourcedevelopment:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGatewaySetUserRestApidevelopment.RootResourceId
+      PathPart: 'lambda'
+      RestApiId: !Ref ApiGatewaySetUserRestApidevelopment
+
+  ApiGatewaySetUserMethoddevelopment:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        ConnectionType: INTERNET
+        Credentials: arn:aws:iam::958429162335:role/LabRole
+        IntegrationHttpMethod: POST
+        PassthroughBehavior: WHEN_NO_MATCH
+        TimeoutInMillis: 29000
+        Type: AWS_PROXY
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SetUserLambdaFunctiondevelopment.Arn}/invocations'
+      OperationName: 'lambda'
+      ResourceId: !Ref ApiGatewaySetUserResourcedevelopment
+      RestApiId: !Ref ApiGatewaySetUserRestApidevelopment
+
+  ApiGatewaySetUserModeldevelopment:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      ContentType: 'application/json'
+      RestApiId: !Ref ApiGatewaySetUserRestApidevelopment
+      Schema: {}
+
+  ApiGatewaySetUserStagedevelopment:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref ApiGatewaySetUserDeploymentdevelopment
+      Description: Lambda API Stage v0
+      RestApiId: !Ref ApiGatewaySetUserRestApidevelopment
+      StageName: 'updateUserDetailsdevelopment'
+
+  ApiGatewaySetUserDeploymentdevelopment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: ApiGatewaySetUserMethoddevelopment
+    Properties:
+      Description: Set User Lambda API Deployment
+      RestApiId: !Ref ApiGatewaySetUserRestApidevelopment
+
+  SetUserLambdaFunctiondevelopment:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+          const aws = require('aws-sdk');
+
+            exports.handler = async (event, context) => {
+                let responseBody = "";
+                let statusCode = 0;
+                
+                try{
+                    const docClient = new aws.DynamoDB.DocumentClient();
+                    const lambda = new aws.Lambda();
+                    // let body = JSON.parse(event.body)
+                    /*const body = JSON.parse(event.body)*/
+                    
+                    const userID = event['userID']
+                    const EasyGames = event['EasyGames']
+                    const MediumGames = event['MediumGames']
+                    const HardGames = event['HardGames']
+                    const EasyScore = event['EasyScore']
+                    const MediumScore = event['MediumScore']
+                    const HardScore = event['HardScore']
+                    const EasyBest = event['EasyBest']
+                    const MediumBest = event['MediumBest']
+                    const HardBest = event['HardBest']
+                    // const userID = body.userID
+                    // const gameScore = body.gameScore
+                    const params = {
+                    TableName: "UserDetailsdevelopment",
+                    Key: {
+                        userID: userID
+                    },
+                    UpdateExpression: "set EasyGames = :EasyGames, MediumGames = :MediumGames, HardGames = :HardGames, EasyScore = :EasyScore, MediumScore = :MediumScore, HardScore = :HardScore,EasyBest = :EasyBest, MediumBest = :MediumBest, HardBest = :HardBest",
+                    ExpressionAttributeValues: {
+                        ":EasyGames": EasyGames,
+                        ":MediumGames": MediumGames,
+                        ":HardGames": HardGames,
+                        ":EasyScore": EasyScore,
+                        ":MediumScore": MediumScore,
+                        ":HardScore": HardScore,
+                        ":EasyBest": EasyBest,
+                        ":MediumBest": MediumBest,
+                        ":HardBest": HardBest
+                    },
+                    ReturnValues: "UPDATED_NEW"
+                };
+                    const data = await docClient.update(params).promise();
+                    console.log(data)
+                    responseBody = JSON.stringify(data);
+                    statusCode = 204;
+                          console.log(responseBody)
+                          const response = {
+                                statusCode: statusCode,
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: responseBody
+                            };
+            
+                        return response;
+            
+                          }
+                    
+                
+                catch (err) {
+                    console.log(err);
+                    const message = `Error`;
+                    console.log(message);
+                    throw new Error(message);
+                }
+            
+            }
+
+      Description: AWS Lambda function to update a user
+      FunctionName: 'setUserDetailsdevelopment'
+      Handler: index.handler
+      MemorySize: 256
+      Role: arn:aws:iam::958429162335:role/LabRole
+      Runtime: nodejs12.x
+      Timeout: 60
+  ApiGatewayUpdateLeadershipRestApidevelopment:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      ApiKeySourceType: HEADER
+      Description: An API Gateway with a Lambda Integration
+      EndpointConfiguration:
+        Types:
+          - EDGE
+      Name: UpdateLeadershipAPIdevelopment
+
+  ApiGatewayUpdateLeadershipResourcedevelopment:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGatewayUpdateLeadershipRestApidevelopment.RootResourceId
+      PathPart: 'lambda'
+      RestApiId: !Ref ApiGatewayUpdateLeadershipRestApidevelopment
+
+  ApiGatewayUpdateLeadershipMethoddevelopment:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        ConnectionType: INTERNET
+        Credentials: arn:aws:iam::958429162335:role/LabRole
+        IntegrationHttpMethod: POST
+        PassthroughBehavior: WHEN_NO_MATCH
+        TimeoutInMillis: 29000
+        Type: AWS_PROXY
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateLeadershipLambdaFunctiondevelopment.Arn}/invocations'
+      OperationName: 'lambda'
+      ResourceId: !Ref ApiGatewayUpdateLeadershipResourcedevelopment
+      RestApiId: !Ref ApiGatewayUpdateLeadershipRestApidevelopment
+
+  ApiGatewayUpdateLeadershipModeldevelopment:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      ContentType: 'application/json'
+      RestApiId: !Ref ApiGatewayUpdateLeadershipRestApidevelopment
+      Schema: {}
+
+  ApiGatewayUpdateLeadershipStagedevelopment:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref ApiGatewayUpdateLeadershipDeploymentdevelopment
+      Description: Lambda API Stage v0
+      RestApiId: !Ref ApiGatewayUpdateLeadershipRestApidevelopment
+      StageName: 'getUserDetailsdevelopment'
+
+  ApiGatewayUpdateLeadershipDeploymentdevelopment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: ApiGatewayUpdateLeadershipMethoddevelopment
+    Properties:
+      Description: Update Leadership Lambda API Deployment
+      RestApiId: !Ref ApiGatewayUpdateLeadershipRestApidevelopment
+
+  UpdateLeadershipLambdaFunctiondevelopment:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+          const aws = require('aws-sdk');
+
+            exports.handler = async (event, context) => {
+                let responseBody = "";
+                let statusCode = 0;
+                const userID = event['userID']
+                const score = event['score']
+                const userName = event['userName']
+                
+                try{
+                    const params = {
+                    TableName: "Leadershipdevelopment",
+                    Item: {
+                        userID: userID,
+                        userName: userName,
+                        score: score
+                    },
+                };
+                    const docClient = new aws.DynamoDB.DocumentClient();
+                    const { Items = [] } =  await docClient.scan({TableName: "Leadershipdevelopment"}).promise();
+                    Items.sort((a,b) => b.score - a.score);
+                    const isScoreGreater = Items.some( data => data['score'] < score )
+                    if (Items.length < 5) {
+                      const data = await docClient.put(params).promise();
+                    } else if (isScoreGreater){
+                      const removeItem = Items.pop()
+                        var fileItem = {
+                        Key: {
+                          userID: removeItem['userID']
+                        },
+                        TableName: 'Leadershipdevelopment',
+                        
+                        };
+                   const removed = await docClient.delete(fileItem, function(err, data) {
+                          if (err) {
+                            console.log(err, err.stack);
+                          }
+                          else {
+                            console.log(data);
+                          }
+                        });
+                      
+                    const data = await docClient.put(params).promise();
+                    }
+                    
+                    statusCode = 204;
+                    
+                }catch (err) {
+                    console.log(err);
+                    const message = `Error`;
+                    console.log(message);
+                    throw new Error(message);
+                }
+            
+            const response = {
+                    statusCode: statusCode,
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: responseBody
+                };
+            
+                return response;
+            };
+
+      Description: AWS Lambda function to update leadership board
+      FunctionName: 'updateLeadershipBoarddevelopment'
+      Handler: index.handler
+      MemorySize: 256
+      Role: arn:aws:iam::958429162335:role/LabRole
+      Runtime: nodejs16.x
+      Timeout: 60  
+      
+  ApiGatewayGetUserRestApidevelopment:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      ApiKeySourceType: HEADER
+      Description: An API Gateway with a Lambda Integration
+      EndpointConfiguration:
+        Types:
+          - EDGE
+      Name: GetUserDetailsAPIdevelopment
+
+  ApiGatewayGetUserResourcedevelopment:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGatewayGetUserRestApidevelopment.RootResourceId
+      PathPart: 'lambda'
+      RestApiId: !Ref ApiGatewayGetUserRestApidevelopment
+
+  ApiGatewayGetUserMethoddevelopment:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        ConnectionType: INTERNET
+        Credentials: arn:aws:iam::958429162335:role/LabRole
+        IntegrationHttpMethod: POST
+        PassthroughBehavior: WHEN_NO_MATCH
+        TimeoutInMillis: 29000
+        Type: AWS_PROXY
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetUserLambdaFunctiondevelopment.Arn}/invocations'
+      OperationName: 'lambda'
+      ResourceId: !Ref ApiGatewayGetUserResourcedevelopment
+      RestApiId: !Ref ApiGatewayGetUserRestApidevelopment
+
+  ApiGatewayGetUserModeldevelopment:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      ContentType: 'application/json'
+      RestApiId: !Ref ApiGatewayGetUserRestApidevelopment
+      Schema: {}
+
+  ApiGatewayGetUserStagedevelopment:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref ApiGatewayGetUserDeploymentdevelopment
+      Description: Lambda API Stage v0
+      RestApiId: !Ref ApiGatewayGetUserRestApidevelopment
+      StageName: 'getUserDetailsdevelopment'
+
+  ApiGatewayGetUserDeploymentdevelopment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: ApiGatewayGetUserMethoddevelopment
+    Properties:
+      Description: Set User Lambda API Deployment
+      RestApiId: !Ref ApiGatewayGetUserRestApidevelopment
+
+  GetUserLambdaFunctiondevelopment:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+          const aws = require('aws-sdk');
+
+            exports.handler = async (event, context) => {
+                let responseBody = "";
+                    let statusCode = 0;
+                
+                try{
+                    const docClient = new aws.DynamoDB.DocumentClient();
+                    /*let body = JSON.parse(event.body)
+                    /*const body = JSON.parse(event.body)*/
+                    
+                    /*const userID = event['userID']
+                    const gameScore = event['gameScore']*/
+                    /*const userID = body.userID
+                    const gameScore = body.gameScore*/
+                    const userID = event["userID"]
+                    const params = {
+                    TableName: "UserDetailsdevelopment",
+                    Key: {
+                        userID: userID
+                      }
+                };
+                    const Item = await docClient.get(params).promise()
+                    console.log(Item)
+                    responseBody = JSON.stringify(Item);
+                    statusCode = 204;
+                    
+                }catch (err) {
+                    console.log(err);
+                    const message = `Error`;
+                    console.log(message);
+                    throw new Error(message);
+                }
+            
+            const response = {
+                    statusCode: statusCode,
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: responseBody
+                };
+
+      Description: AWS Lambda function to get user details
+      FunctionName: 'getUserDetailsdevelopment'
+      Handler: index.handler
+      MemorySize: 256
+      Role: arn:aws:iam::958429162335:role/LabRole
+      Runtime: nodejs12.x
+      Timeout: 60 
+      
+  ApiGatewayGetLeadershipRestApidevelopment:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      ApiKeySourceType: HEADER
+      Description: An API Gateway with a Lambda Integration
+      EndpointConfiguration:
+        Types:
+          - EDGE
+      Name: GetLeadershipDetailAPIdevelopment
+
+  ApiGatewayGetLeadershipResourcedevelopment:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGatewayGetLeadershipRestApidevelopment.RootResourceId
+      PathPart: 'lambda'
+      RestApiId: !Ref ApiGatewayGetLeadershipRestApidevelopment
+
+  ApiGatewayGetLeadershipMethoddevelopment:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      HttpMethod: GET
+      Integration:
+        ConnectionType: INTERNET
+        Credentials: arn:aws:iam::958429162335:role/LabRole
+        IntegrationHttpMethod: GET
+        PassthroughBehavior: WHEN_NO_MATCH
+        TimeoutInMillis: 29000
+        Type: AWS_PROXY
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetLeadershipLambdaFunctiondevelopment.Arn}/invocations'
+      OperationName: 'lambda'
+      ResourceId: !Ref ApiGatewayGetLeadershipResourcedevelopment
+      RestApiId: !Ref ApiGatewayGetLeadershipRestApidevelopment
+
+  ApiGatewayGetLeadershipModeldevelopment:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      ContentType: 'application/json'
+      RestApiId: !Ref ApiGatewayGetLeadershipRestApidevelopment
+      Schema: {}
+
+  ApiGatewayGetLeadershipStagedevelopment:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref ApiGatewayGetLeadershipDeploymentdevelopment
+      Description: Lambda API Stage v0
+      RestApiId: !Ref ApiGatewayGetLeadershipRestApidevelopment
+      StageName: 'getLeadershipdevelopment'
+
+  ApiGatewayGetLeadershipDeploymentdevelopment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: ApiGatewayGetLeadershipMethoddevelopment
+    Properties:
+      Description: Get leadership Lambda API Deployment
+      RestApiId: !Ref ApiGatewayGetLeadershipRestApidevelopment
+
+  GetLeadershipLambdaFunctiondevelopment:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+          const aws = require('aws-sdk');
+
+            exports.handler = async (event, context) => {
+                let responseBody = "";
+                let statusCode = 0;
+                
+                try{
+                    const docClient = new aws.DynamoDB.DocumentClient();
+                    const { Items = [] } =  await docClient.scan({TableName: "Leadershipdevelopment"}).promise();
+                    console.log(Items)
+                    Items.sort((a,b) => b.score - a.score);
+                    console.log(Items)
+                    responseBody = JSON.stringify(Items);
+                    console.log(responseBody)
+                    statusCode = 204;
+                    
+                }catch (err) {
+                    console.log(err);
+                    const message = `Error`;
+                    console.log(message);
+                    throw new Error(message);
+                }
+            
+            const response = {
+                    statusCode: statusCode,
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: responseBody
+                };
+            
+                return response;
+            };
+
+      Description: AWS Lambda function to get leadership details
+      FunctionName: 'getLeadershipBoarddevelopment'
+      Handler: index.handler
+      MemorySize: 256
+      Role: arn:aws:iam::958429162335:role/LabRole
+      Runtime: nodejs16.x
+      Timeout: 60 
+
+  ApiGatewaySubscribeSNSRestApidevelopment:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      ApiKeySourceType: HEADER
+      Description: An API Gateway with a Lambda Integration
+      EndpointConfiguration:
+        Types:
+          - EDGE
+      Name: SubscribeToSNSAPIdevelopment
+
+  ApiGatewaySubscribeSNSResourcedevelopment:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGatewaySubscribeSNSRestApidevelopment.RootResourceId
+      PathPart: 'lambda'
+      RestApiId: !Ref ApiGatewaySubscribeSNSRestApidevelopment
+
+  ApiGatewaySubscribeSNSMethoddevelopment:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        ConnectionType: INTERNET
+        Credentials: arn:aws:iam::958429162335:role/LabRole
+        IntegrationHttpMethod: POST
+        PassthroughBehavior: WHEN_NO_MATCH
+        TimeoutInMillis: 29000
+        Type: AWS_PROXY
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SubscribeSNSLambdaFunctiondevelopment.Arn}/invocations'
+      OperationName: 'lambda'
+      ResourceId: !Ref ApiGatewaySubscribeSNSResourcedevelopment
+      RestApiId: !Ref ApiGatewaySubscribeSNSRestApidevelopment
+
+  ApiGatewaySubscribeSNSModeldevelopment:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      ContentType: 'application/json'
+      RestApiId: !Ref ApiGatewaySubscribeSNSRestApidevelopment
+      Schema: {}
+
+  ApiGatewaySubscribeSNSStagedevelopment:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref ApiGatewaySubscribeSNSDeploymentdevelopment
+      Description: Lambda API Stage v0
+      RestApiId: !Ref ApiGatewaySubscribeSNSRestApidevelopment
+      StageName: 'subscribe'
+
+  ApiGatewaySubscribeSNSDeploymentdevelopment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: ApiGatewaySubscribeSNSMethoddevelopment
+    Properties:
+      Description: Get leadership Lambda API Deployment
+      RestApiId: !Ref ApiGatewaySubscribeSNSRestApidevelopment
+
+  SubscribeSNSLambdaFunctiondevelopment:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+          import json
+
+            import logging
+            import boto3
+            from botocore.exceptions import ClientError
+            
+            AWS_REGION = 'us-east-1'
+            
+            sns_client = boto3.client('sns', region_name=AWS_REGION)
+            
+            
+            def lambda_handler(event, context):
+                body = json.dumps(event)
+                print(body)
+                print("event",event)
+                userEmail = event['userID']
+                topic_arn = "arn:aws:sns:us-east-1:045804653870:LeaderboardNotification"
+            # # Create Email Subscription
+                response = sns_client.subscribe(TopicArn=topic_arn, Protocol="Email", Endpoint=userEmail)
+                subscription_arn = response["SubscriptionArn"]
+                output = {
+                    body: response
+                };
+            
+                return output;
+
+
+      Description: AWS Lambda function to subscribe to SNS
+      FunctionName: 'subscribeToSNSdevelopment'
+      Handler: index.handler
+      MemorySize: 256
+      Role: arn:aws:iam::958429162335:role/LabRole
+      Runtime: python3.9
+      Timeout: 60 
+      
+  PublishThroughSNSLambdaFunctiondevelopment:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+          import json
+          import logging
+            import boto3
+            from botocore.exceptions import ClientError
+            AWS_REGION = 'us-east-1'
+            logger = logging.getLogger()
+            logging.basicConfig(level=logging.INFO,
+                                format='%(asctime)s: %(levelname)s: %(message)s')
+            sns_client = boto3.client('sns', region_name=AWS_REGION)
+            dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
+            def lambda_handler(event, context):
+                topic_arn = "arn:aws:sns:us-east-1:045804653870:LeaderboardNotification"
+                # email body
+                response = dynamodb.Table('Leadership').scan()
+                data = response['Items']
+                message = ""
+                rank=1
+                for value in data:
+                    message+="Rank: "+str(rank)+" \n" +"Score: "+ str(value['score']) + " by "+value['userID']+"\n"
+                    rank+=1
+                print(message)
+             
+                sns_client.publish(TopicArn=topic_arn, 
+                    Message=message, 
+                    Subject="Boggle Game Leaderboard")
+    
+          
+      Description: AWS Lambda function to publish through SNS
+      FunctionName: 'publishThroughSNSdevelopment'
+      Handler: index.handler
+      MemorySize: 256
+      Role: arn:aws:iam::958429162335:role/LabRole
+      Runtime: python3.9
+      Timeout: 60
+      
+  solveGridFunctiondevelopment:
+        Type: AWS::Lambda::Function
+        Properties:
+          FunctionName: "solveGriddevelopment"
+          Handler: "lambda.Handler"
+          Role: arn:aws:iam::958429162335:role/LabRole
+          Code:
+            S3Bucket: !Sub "boggle-app-code"
+            S3Key: "SolveBoggleGrid.jar"
+          Runtime: "java8"
+          Timeout: 90
+          MemorySize: 384
+  ScheduledRuledevelopment: 
+      Type: AWS::Events::Rule
+      Properties: 
+        Description: "Scheduled Leaderboard Notification"
+        ScheduleExpression: "rate(7 days)"
+        State: "ENABLED"
+        Targets: 
+          - 
+            Arn: !GetAtt PublishThroughSNSLambdaFunctiondevelopment.Arn
+            Id: "TargetFunctionV1"
+  PermissionForEventsToInvokeLambdadevelopment: 
+      Type: AWS::Lambda::Permission
+      Properties: 
+        FunctionName: "publishThroughSNSdevelopment"
+        Action: "lambda:InvokeFunction"
+        Principal: "events.amazonaws.com"
+        SourceArn: 
+          Fn::GetAtt: 
+            - "ScheduledRuledevelopment"
+            - "Arn"
+  
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UsernameConfiguration: 
+        CaseSensitive: false
+      UsernameAttributes: 
+        - email
+      AutoVerifiedAttributes:
+        - email
+      UserPoolName: !Sub boggle-game
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: false
+          Required: true
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UserPool
+      AllowedOAuthFlowsUserPoolClient: true
+      CallbackURLs:
+        - https://batcloud-react-aws-hosting.s3-website-us-east-1.amazonaws.com/
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthScopes:
+        - email
+        - openid
+      SupportedIdentityProviders:
+        - COGNITO
+  boggleGame:
+    Type: AWS::ElasticBeanstalk::Application
+    Properties:
+      Description: AWS Elastic Beanstalk Sample Application
+  boggleGameVersion:
+    Type: AWS::ElasticBeanstalk::ApplicationVersion
+    Properties:
+      ApplicationName:
+        Ref: boggleGame
+      Description: AWS Elastic Beanstalk Sample Application Version
+      SourceBundle:
+        S3Bucket: !Sub "boggle-app-code"
+        S3Key: boogle-game.zip
+  boggleGameConfigurationTemplate:
+    Type: AWS::ElasticBeanstalk::ConfigurationTemplate
+    Properties:
+      ApplicationName:
+        Ref: boggleGame
+      Description: AWS ElasticBeanstalk Sample Configuration Template
+      OptionSettings:
+      - Namespace: aws:autoscaling:asg
+        OptionName: MinSize
+        Value: '2'
+      - Namespace: aws:autoscaling:asg
+        OptionName: MaxSize
+        Value: '6'
+      - Namespace: aws:elasticbeanstalk:environment
+        OptionName: EnvironmentType
+        Value: LoadBalanced
+      - Namespace: aws:autoscaling:launchconfiguration
+        OptionName: IamInstanceProfile
+        Value:
+          Ref: MyInstanceProfile
+      SolutionStackName: 64bit Amazon Linux 2 v5.5.4 running Node.js 16
+  boggleGameEnv:
+    Type: AWS::ElasticBeanstalk::Environment
+    Properties:
+      ApplicationName:
+        Ref: boggleGame
+      Description: boggleGame on AWS Beanstalk
+      TemplateName:
+        Ref: boggleGameConfigurationTemplate
+      VersionLabel:
+        Ref: boggleGameVersion
+  MyInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      Roles:
+       - LabRole
